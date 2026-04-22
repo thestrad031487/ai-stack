@@ -1,0 +1,98 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - default
+      - ai-shared
+
+  openclaw:
+    image: ghcr.io/openclaw/openclaw:latest
+    container_name: openclaw
+    restart: unless-stopped
+    depends_on:
+      - ollama
+    ports:
+      - "18789:18789"
+    volumes:
+      - ./openclaw-home:/home/node/.openclaw
+
+  slack-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.slackbot
+    container_name: slack-bot
+    restart: unless-stopped
+    depends_on:
+      - openclaw
+    environment:
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      - SLACK_APP_TOKEN=${SLACK_APP_TOKEN}
+      - OPENCLAW_API_URL=http://openclaw:18789
+      - AGENTS_DIR=/app/security-agents
+      - SHELTER_API=https://shelter-api.cybergrind.org
+    volumes:
+      - ./security-agents/outputs/reports:/app/security-agents/outputs/reports
+    networks:
+      - default
+      - ai-shared
+
+  server-health-scheduler:
+    build:
+      context: ./server-health
+      dockerfile: Dockerfile
+    container_name: server-health-scheduler
+    restart: unless-stopped
+    environment:
+      OLLAMA_URL: http://ollama:11434
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN}
+      SLACK_CHANNEL: "#serverhealth"
+      HEALTH_MODEL: mistral
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/log:/host/var/log:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - default
+      - ai-shared
+    depends_on:
+      - ollama
+
+  report-ui:
+    build:
+      context: ./report-ui
+      dockerfile: Dockerfile
+    container_name: report-ui
+    restart: unless-stopped
+    ports:
+      - "8200:8100"
+    volumes:
+      - ./security-agents/outputs/reports:/app/reports
+    networks:
+      - default
+      - ai-shared
+
+networks:
+  ai-shared:
+    external: true
+

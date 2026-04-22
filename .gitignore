@@ -1,0 +1,26 @@
+# Secrets & credentials
+.env
+*.key
+*.crt
+*.pem
+
+# TLS certs
+thestrad-ubuntu-server.*
+
+# Ollama model data and SSH keys
+ollama/
+
+# OpenClaw runtime data (sessions, memory, identity)
+openclaw-home/
+
+# Generated reports
+reports/
+security-agents/outputs/reports/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs
+*.log

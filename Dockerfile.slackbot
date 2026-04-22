@@ -1,0 +1,10 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN pip install slack_bolt requests python-dotenv ddgs
+
+COPY slack_bot/slack_bot.py .
+COPY security-agents /app/security-agents
+
+CMD ["python", "slack_bot.py"]
