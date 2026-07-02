@@ -1,0 +1,71 @@
+name: Generate SBOM
+ 
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+ 
+permissions:
+  contents: write
+  security-events: write
+ 
+jobs:
+  sbom:
+    runs-on: self-hosted
+    strategy:
+      matrix:
+        include:
+          - service: server-health-scheduler
+            image: ai-stack-server-health-scheduler:latest
+          - service: slack-bot
+            image: ai-stack-slack-bot:latest
+          - service: report-ui
+            image: ai-stack-report-ui:latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+ 
+      - name: Build image
+        run: docker compose build ${{ matrix.service }}
+ 
+      - name: Generate SBOM (CycloneDX JSON)
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ matrix.image }}
+          format: cyclonedx-json
+          output-file: sbom-${{ matrix.service }}.cdx.json
+          upload-artifact: true
+          upload-artifact-retention: 30
+ 
+      - name: Scan SBOM for vulnerabilities (Grype)
+        uses: anchore/scan-action@v5
+        id: grype-scan
+        with:
+          sbom: sbom-${{ matrix.service }}.cdx.json
+          fail-build: false
+          severity-cutoff: high
+          output-format: sarif
+ 
+      - name: Upload Grype results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: ${{ steps.grype-scan.outputs.sarif }}
+          category: ${{ matrix.service }}
+ 
+      - name: Upload SBOM to Dependency-Track
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          DTRACK_URL: ${{ secrets.DTRACK_URL }}
+          DTRACK_API_KEY: ${{ secrets.DTRACK_API_KEY }}
+        run: |
+          curl -sS -X POST "${DTRACK_URL}/api/v1/bom" \
+            -H "X-Api-Key: ${DTRACK_API_KEY}" \
+            -F "autoCreate=true" \
+            -F "projectName=ai-stack-${{ matrix.service }}" \
+            -F "projectVersion=main" \
+            -F "bom=@sbom-${{ matrix.service }}.cdx.json" \
+            --fail-with-body
+ 
