@@ -1,4 +1,6 @@
 import os
+import html
+import json
 from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
@@ -112,15 +114,16 @@ def view_report(filename: str):
     except:
         raise HTTPException(status_code=500, detail="Could not read report")
 
-    safe_content = content.replace("`", "&#96;").replace("\\", "\\\\").replace("${", "&#36;{")
+    safe_json = json.dumps(content).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
 
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Report — {filename}</title>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<title>Report — {html.escape(filename)}</title>
+<script src="https://cdn.jsdelivr.net/npm/marked@18.0.14/lib/marked.umd.js" integrity="sha384-2vpGtuKqJvFlwJqYnf/wUMuzUfhUnYBt9oay0e2yaFcq0Dh6/aEbQ8YAOeKGzlYo" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.16/dist/purify.min.js" integrity="sha384-a7SzOxErzJ3ZpQz0zJ32d67dSitNzPcbfybc/ykU9KJhMgZkwqfSxlhhdJRS+XGL" crossorigin="anonymous"></script>
 <style>
   *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{ background: #1d1e20; color: #dad8d2; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; line-height: 1.75; }}
@@ -147,12 +150,12 @@ def view_report(filename: str):
 <body>
 <div class="wrap">
   <a href="/" class="back">← All Reports</a>
-  <div class="meta">{filename}</div>
+  <div class="meta">{html.escape(filename)}</div>
   <div class="report-body" id="report"></div>
 </div>
 <script>
-  const raw = `{safe_content}`;
-  document.getElementById('report').innerHTML = marked.parse(raw);
+  const raw = {safe_json};
+  document.getElementById('report').innerHTML = DOMPurify.sanitize(marked.parse(raw));
 </script>
 </body>
 </html>"""

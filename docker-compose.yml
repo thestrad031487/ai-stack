@@ -85,9 +85,9 @@ services:
     container_name: report-ui
     restart: unless-stopped
     ports:
-      - "8200:8100"
+      - "127.0.0.1:8200:8100"
     volumes:
-      - ./security-agents/outputs/reports:/app/reports
+      - ./security-agents/outputs/reports:/app/reports:ro
     networks:
       - default
       - ai-shared
