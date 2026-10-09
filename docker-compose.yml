@@ -92,6 +92,25 @@ services:
       - default
       - ai-shared
 
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+    depends_on:
+      - ollama
+    ports:
+      - "3000:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    volumes:
+      - open-webui-data:/app/backend/data
+    networks:
+      - default
+      - ai-shared
+
+volumes:
+  open-webui-data:
+
 networks:
   ai-shared:
     external: true

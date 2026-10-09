@@ -1,5 +1,6 @@
 # Secrets & credentials
 .env
+.env.*
 *.key
 *.crt
 *.pem
