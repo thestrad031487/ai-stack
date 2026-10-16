@@ -99,7 +99,9 @@ services:
     depends_on:
       - ollama
     ports:
-      - "3000:8080"
+      - "127.0.0.1:3000:8080"
+    extra_hosts:
+      - "thestrad-colibri.giraffe-clownfish.ts.net:100.87.255.39"
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
     volumes:
