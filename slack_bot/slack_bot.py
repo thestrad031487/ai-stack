@@ -24,8 +24,8 @@ def chat(message: str) -> str:
     response = requests.post(
         f"{OLLAMA_URL}/api/chat",
         json={
-            "model": "llama3.2:3b",
-            "messages": [{"role": "user", "content": message}],
+            "model": "gemma3:4b",
+            "messages": [{"role": "system", "content": "Respond concisely in plain conversational text, no more than 2-4 sentences unless the user explicitly asks for a detailed breakdown. Avoid markdown headers and bullet lists for simple answers."}, {"role": "user", "content": message}],
             "stream": False
         },
         timeout=60
@@ -207,7 +207,7 @@ Write the narrator summary now:"""
         response = requests.post(
             f"{OLLAMA_URL}/api/chat",
             json={
-                "model": "llama3.2:3b",
+                "model": "gemma3:4b",
                 "messages": [{"role": "user", "content": prompt}],
                 "stream": False
             },

@@ -18,7 +18,7 @@ For each risk provide:
 - Impact: High / Medium / Low
 - Likelihood: High / Medium / Low (given the nonprofit context above)
 - Description of the threat vector and how it applies to this environment
-- If relevant MISP IOCs are present, reference them explicitly (e.g. "Active C2 observed: domain shadowroute.co")
+- If relevant MISP IOCs are present, reference them explicitly (e.g. "Active C2 observed: domain <example.com>" — use this format ONLY if actual MISP data appears in your input context below. If no MISP data is provided, do NOT invent or reference any IOCs.)
 
 Prioritize by impact first, then likelihood. Limit to the 5 most significant risks.
 Avoid generic risks that apply to every organization — be specific to the topic and this environment.
